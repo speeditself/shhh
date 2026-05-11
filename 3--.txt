@@ -1,0 +1,96 @@
+SQL-- 1. Create Book table
+CREATE TABLE Book (
+    Book_ID INT PRIMARY KEY,
+    Book_Name VARCHAR(50),
+    Author VARCHAR(50),
+    Price DECIMAL(10,2),
+    Category VARCHAR(30)
+);
+SQL-- 2. Insert records into Book table
+INSERT INTO Book
+VALUES
+(1, 'Data Structures', 'Mark Allen', 500, 'Education'),
+(2, 'Database System', 'Navathe', 650, 'Education'),
+(3, 'Java Programming', 'Herbert Schildt', 700, 'Programming'),
+(4, 'Python Basics', 'Guido Rossum', 550, 'Programming'),
+(5, 'Digital Logic', 'Morris Mano', 450, 'Education');
+SQL-- 3. Display all records
+SELECT * FROM Book;
+SQL-- 4. Increase price of Programming books by 10%
+UPDATE Book
+SET Price = Price + (Price * 0.10)
+WHERE Category = 'Programming';
+SQL-- 5. Delete books whose price is less than 500
+DELETE FROM Book
+WHERE Price < 500;
+SQL-- 6. Display book name, price and new price
+SELECT Book_Name,
+       Price,
+       Price + 100 AS New_Price
+FROM Book;
+SQL-- 7. Retrieve Education books with price greater than 500
+SELECT *
+FROM Book
+WHERE Category = 'Education'
+AND Price > 500;
+SQL-- 8. Display books whose names start with 'D'
+SELECT *
+FROM Book
+WHERE Book_Name LIKE 'D%';
+SQL-- 9. Display book names in uppercase and authors in lowercase
+SELECT UPPER(Book_Name) AS Book_Name,
+       LOWER(Author) AS Author
+FROM Book;
+SQL-- 10. Find length of each book name
+SELECT Book_Name,
+       LENGTH(Book_Name) AS Name_Length
+FROM Book;
+SQL-- 11. Extract substring from book name
+SELECT Book_Name,
+       SUBSTRING(Book_Name, 1, 5) AS Sub_Name
+FROM Book;
+SQL-- 12. Create Issued_Book table
+CREATE TABLE Issued_Book (
+    Book_Name VARCHAR(50)
+);
+SQL-- Insert sample records
+INSERT INTO Issued_Book
+VALUES
+('Java Programming'),
+('Database System'),
+('C Programming');
+SQL-- 13(a). Display book names from both tables using UNION
+SELECT Book_Name FROM Book
+UNION
+SELECT Book_Name FROM Issued_Book;
+SQL-- 13(b). Display common book names from both tables
+SELECT Book_Name FROM Book
+INTERSECT
+SELECT Book_Name FROM Issued_Book;
+Note: If INTERSECT does not work in MySQL, use:
+SQL
+SELECT Book.Book_Name
+FROM Book
+INNER JOIN Issued_Book
+ON Book.Book_Name = Issued_Book.Book_Name;
+SQL-- 14. Create new MySQL user
+CREATE USER 'student1'@'localhost'
+IDENTIFIED BY 'student123';
+SQL-- 15. Grant SELECT and UPDATE privileges
+GRANT SELECT, UPDATE
+ON Book
+TO 'student1'@'localhost';
+SQL-- 16. Revoke UPDATE privilege
+REVOKE UPDATE
+ON Book
+FROM 'student1'@'localhost';
+SQL-- 17. Transaction Control Example
+START TRANSACTION;
+INSERT INTO Book
+VALUES (6, 'C Programming', 'Dennis Ritchie', 600, 'Programming');
+SAVEPOINT sp1;
+UPDATE Book
+SET Price = 750
+WHERE Book_ID = 6;
+ROLLBACK TO sp1;
+COMMIT;
