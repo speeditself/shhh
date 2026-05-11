@@ -1,0 +1,206 @@
+use OrdersDB
+// Create Collection
+db.orders.insertMany([
+{
+    order_id: 1,
+    cust_id: 101,
+    cust_name: "Amit",
+    item_name: "Laptop",
+    amount: 50000,
+    quantity: 1,
+    status: "Delivered",
+    order_date: ISODate("2025-05-01")
+},
+{
+},
+{
+    order_id: 2,
+    cust_id: 102,
+    cust_name: "Rahul",
+    item_name: "Mouse",
+    amount: 800,
+    quantity: 2,
+    status: "Pending",
+    order_date: ISODate("2025-05-02")
+    order_id: 3,
+    cust_id: 101,
+cust_name: "Amit",
+    item_name: "Keyboard",
+    amount: 1500,
+    quantity: 1,
+    status: "Pending",
+    order_date: ISODate("2025-05-03")
+},
+{
+},
+{
+},
+{
+},
+{
+    order_id: 4,
+    cust_id: 103,
+    cust_name: "Sneha",
+    item_name: "Laptop",
+    amount: 52000,
+    quantity: 1,
+    status: "Delivered",
+    order_date: ISODate("2025-05-03")
+    order_id: 5,
+    cust_id: 104,
+    cust_name: "Priya",
+    item_name: "Monitor",
+    amount: 12000,
+    quantity: 1,
+    status: "Pending",
+    order_date: ISODate("2025-05-04")
+    order_id: 6,
+    cust_id: 102,
+    cust_name: "Rahul",
+    item_name: "Laptop",
+    amount: 51000,
+    quantity: 1,
+    status: "Delivered",
+    order_date: ISODate("2025-05-05")
+    order_id: 7,
+    cust_id: 105,
+    cust_name: "Karan",
+    item_name: "Mouse",
+    amount: 900,
+    quantity: 3,
+    status: "Pending",
+
+1. Create a simple index on cust_id and item_name
+// ======================================================
+db.orders.createIndex({cust_id:1})
+db.orders.createIndex({item_name:1})
+// Show Indexes
+db.orders.getIndexes()
+// ======================================================
+// 2. Display all customer names with no repetition
+// ======================================================
+db.orders.distinct("cust_name")
+// ======================================================
+// 3. Find total no of orders and pending orders
+// ======================================================
+db.orders.aggregate([
+{
+    $group:{
+        _id:null,
+        total_orders:{$sum:1},
+        pending_orders:{
+            $sum:{
+                $cond:[{$eq:["$status","Pending"]},1,0]
+            }
+        }
+    }
+}
+])
+// ======================================================
+// 4. Sorting documents based on amount
+// ======================================================
+// WITHOUT INDEXING
+db.orders.find().sort({amount:1}).explain("executionStats")
+// Create Index on amount
+db.orders.createIndex({amount:1})
+// WITH INDEXING
+db.orders.find().sort({amount:1}).explain("executionStats")
+
+5. Pending orders details with and without indexing
+// ======================================================
+// WITHOUT INDEXING
+db.orders.find({status:"Pending"}).explain("executionStats")
+// Create Index on status
+db.orders.createIndex({status:1})
+// WITH INDEXING
+db.orders.find({status:"Pending"}).explain("executionStats")
+// ======================================================
+// 6. Show how many orders are placed by each customer
+// ======================================================
+db.orders.aggregate([
+{
+    $group:{
+        _id:"$cust_id",
+        total_orders:{$sum:1}
+    }
+}
+])
+// ======================================================
+// 7. Customer ids with total pending amount descending
+// ======================================================
+db.orders.aggregate([
+{
+    $match:{status:"Pending"}
+},
+{
+},
+{
+}
+])
+    $group:{
+        _id:"$cust_id",
+        total_pending_amount:{$sum:"$amount"}
+    }
+    $sort:{total_pending_amount:-1}
+// ======================================================
+// 8. Customer ids ascending with delivered total amount
+// ======================================================
+db.orders.aggregate([
+{
+    $match:{status:"Delivered"}
+},
+{
+},
+{
+}
+])
+        _id:"$cust_id",
+        total_amount:{$sum:"$amount"}
+    }
+    $sort:{_id:1}
+// ======================================================
+// 9. Top three selling items
+// ======================================================
+db.orders.aggregate([
+{
+    $group:{
+        _id:"$item_name",
+        total_quantity:{$sum:"$quantity"}
+    }
+},
+{
+},
+{
+}
+])
+    $sort:{total_quantity:-1}
+    $limit:3
+// ======================================================
+// 10. Date on which maximum orders are received
+// ======================================================
+db.orders.aggregate([
+{
+    $group:{
+        _id:"$order_date",
+        total_orders:{$sum:1}
+    }
+},
+{
+},
+{
+}
+    $sort:{total_orders:-1}
+    $limit:1
+])
+// ======================================================
+// 11. Customer ids with FIRST and LAST order date
+// ======================================================
+db.orders.aggregate([
+{
+    $group:{
+        _id:"$cust_id",
+        first_order:{$min:"$order_date"},
+        last_order:{$max:"$order_date"}
+    }
+}
+])
