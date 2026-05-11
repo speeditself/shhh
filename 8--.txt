@@ -1,0 +1,223 @@
+-- =========================================
+-- 1. CREATE LIBRARY TABLE
+-- =========================================
+
+CREATE TABLE library (
+    B_id INT PRIMARY KEY,
+    Title VARCHAR(50),
+    Authors VARCHAR(50),
+    Edition INT,
+    no_of_c INT
+);
+
+-- =========================================
+-- 2. CREATE LIBRARY AUDIT TABLE
+-- =========================================
+
+CREATE TABLE library_audit (
+    B_id INT,
+    Title VARCHAR(50),
+    Authors VARCHAR(50),
+    Edition INT,
+    no_of_c INT,
+    date_of_mod DATE,
+    type_of_op VARCHAR(10),
+    username VARCHAR(50)
+);
+
+-- =========================================
+-- 3. CREATE TRANSACTIONS TABLE
+-- =========================================
+
+CREATE TABLE transactions (
+    Trans_id INT PRIMARY KEY,
+    B_id INT,
+    I_R CHAR(1),
+    no_of_c INT,
+    FOREIGN KEY (B_id) REFERENCES library(B_id)
+);
+
+-- =========================================
+-- 4. INSERT VALUES INTO LIBRARY
+-- =========================================
+
+INSERT INTO library VALUES
+(1,'DBMS','Navathe',5,10),
+(2,'Operating System','Galvin',8,15),
+(3,'Computer Networks','Tanenbaum',4,12),
+(4,'Java Programming','Herbert Schildt',7,20);
+
+-- =========================================
+-- 5. DISPLAY LIBRARY TABLE
+-- =========================================
+
+SELECT * FROM library;
+
+-- =========================================
+-- QUESTION 1
+-- CREATE TRIGGER FOR UPDATE OPERATION
+-- =========================================
+
+DELIMITER $$
+
+CREATE TRIGGER t_update
+AFTER UPDATE ON library
+FOR EACH ROW
+BEGIN
+
+INSERT INTO library_audit
+VALUES(
+OLD.B_id,
+OLD.Title,
+OLD.Authors,
+OLD.Edition,
+OLD.no_of_c,
+CURDATE(),
+'UPDATE',
+CURRENT_USER()
+);
+
+END$$
+
+DELIMITER ;
+
+-- =========================================
+-- CREATE TRIGGER FOR DELETE OPERATION
+-- =========================================
+
+DELIMITER $$
+
+CREATE TRIGGER t_delete
+AFTER DELETE ON library
+FOR EACH ROW
+BEGIN
+
+INSERT INTO library_audit
+VALUES(
+OLD.B_id,
+OLD.Title,
+OLD.Authors,
+OLD.Edition,
+OLD.no_of_c,
+CURDATE(),
+'DELETE',
+CURRENT_USER()
+);
+
+END$$
+
+DELIMITER ;
+
+-- =========================================
+-- TEST UPDATE TRIGGER
+-- =========================================
+
+UPDATE library
+SET Authors='Korth'
+WHERE B_id=1;
+
+-- =========================================
+-- TEST DELETE TRIGGER
+-- =========================================
+
+DELETE FROM library
+WHERE B_id=4;
+
+-- =========================================
+-- DISPLAY AUDIT TABLE
+-- =========================================
+
+SELECT * FROM library_audit;
+
+-- =========================================
+-- QUESTION 2
+-- TRIGGER TO CHECK AVAILABLE COPIES
+-- =========================================
+
+DELIMITER $$
+
+CREATE TRIGGER t_check
+BEFORE INSERT ON transactions
+FOR EACH ROW
+BEGIN
+
+DECLARE available INT;
+
+IF NEW.I_R='I' THEN
+
+SELECT no_of_c
+INTO available
+FROM library
+WHERE B_id=NEW.B_id;
+
+IF NEW.no_of_c > available THEN
+SET NEW.no_of_c = available;
+END IF;
+
+END IF;
+
+END$$
+
+DELIMITER ;
+
+-- =========================================
+-- QUESTION 3
+-- UPDATE COPIES AFTER ISSUE/RETURN
+-- =========================================
+
+DELIMITER $$
+
+CREATE TRIGGER t_update_copies
+AFTER INSERT ON transactions
+FOR EACH ROW
+BEGIN
+
+IF NEW.I_R='I' THEN
+
+UPDATE library
+SET no_of_c = no_of_c - NEW.no_of_c
+WHERE B_id=NEW.B_id;
+
+ELSE
+
+UPDATE library
+SET no_of_c = no_of_c + NEW.no_of_c
+WHERE B_id=NEW.B_id;
+
+END IF;
+
+END$$
+
+DELIMITER ;
+
+-- =========================================
+-- INSERT ISSUE TRANSACTION
+-- =========================================
+
+INSERT INTO transactions
+VALUES(101,1,'I',5);
+
+-- =========================================
+-- DISPLAY LIBRARY TABLE
+-- =========================================
+
+SELECT * FROM library;
+
+-- =========================================
+-- INSERT RETURN TRANSACTION
+-- =========================================
+
+INSERT INTO transactions
+VALUES(102,1,'R',2);
+
+-- =========================================
+-- DISPLAY LIBRARY TABLE
+-- =========================================
+
+SELECT * FROM library;
+
+-- =========================================
+-- DISPLAY TRANSACTIONS TABLE
+-- =========================================
+
+SELECT * FROM transactions;
