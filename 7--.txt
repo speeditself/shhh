@@ -1,0 +1,79 @@
+To create and execute stored procedures and functions in MySQL using cursors for 
+processing data row-by-row and performing operations such as calculations, updates, and 
+aggregations. 
+Query :  -- 1. Create Table-- 
+CREATE TABLE employees ( 
+emp_id INT, 
+name VARCHAR(50), 
+salary INT 
+); -- 2. Insert Sample Data-- 
+INSERT INTO employees VALUES 
+(1, 'Amit', 20000), 
+(2, 'Riya', 25000), 
+(3, 'John', 30000), 
+(4, 'Neha', 28000); -- 3. Stored Procedure: Update Salary (10%)-- 
+CREATE PROCEDURE update_salary() 
+BEGIN 
+DECLARE done INT DEFAULT 0; 
+DECLARE id INT; 
+DECLARE sal INT; 
+DECLARE emp_cursor CURSOR FOR  
+SELECT emp_id, salary FROM employees; 
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1; 
+OPEN emp_cursor; 
+read_loop: LOOP 
+FETCH emp_cursor INTO id, sal; 
+IF done THEN 
+LEAVE read_loop; 
+END IF; 
+UPDATE employees 
+SET salary = sal + (sal * 0.10) 
+WHERE emp_id = id; 
+END LOOP; 
+CLOSE emp_cursor; 
+END  
+CALL update_salary(); -- 4. Stored Procedure: Total Salary -- 
+CREATE PROCEDURE total_salary() 
+BEGIN 
+DECLARE done INT DEFAULT 0; 
+DECLARE sal INT; 
+DECLARE total INT DEFAULT 0; 
+DECLARE emp_cursor CURSOR FOR  
+SELECT salary FROM employees; 
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1; 
+OPEN emp_cursor; 
+read_loop: LOOP 
+FETCH emp_cursor INTO sal; 
+IF done THEN 
+LEAVE read_loop; 
+END IF; 
+SET total = total + sal; 
+END LOOP; 
+CLOSE emp_cursor; 
+SELECT total AS Total_Salary; 
+END  
+-- 5. Function: Average Salary-- 
+CREATE FUNCTION avg_salary() 
+RETURNS DECIMAL(10,2) 
+DETERMINISTIC 
+BEGIN 
+DECLARE done INT DEFAULT 0; 
+DECLARE sal INT; 
+DECLARE total INT DEFAULT 0; 
+DECLARE count_emp INT DEFAULT 0; 
+DECLARE emp_cursor CURSOR FOR  
+SELECT salary FROM employees; 
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1; 
+OPEN emp_cursor; 
+read_loop: LOOP 
+FETCH emp_cursor INTO sal; 
+IF done THEN 
+LEAVE read_loop; 
+END IF; 
+SET total = total + sal; 
+SET count_emp = count_emp + 1; 
+END LOOP; 
+CLOSE emp_cursor; 
+RETURN total / count_emp; 
+END  -- Execute Function-- 
+SELECT avg_salary(); 
